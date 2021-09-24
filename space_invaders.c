@@ -18,11 +18,12 @@
 #define MINION_RIGHT "./models/minion/minion_right.txt"
 
 
+typedef struct minion minion;
 struct minion
 {
     int posX;
     int posY;
-    int direction; // N/:1 - E:2 - S:3 - W:4
+    int direction; // D:1 - E:2 - W:3
 };
 
 
@@ -72,34 +73,70 @@ void display_element_XY(int x, int y, char *file_path)
 
 int main()
 {
+    minion m1 = {
+        .posX = 5,
+        .posY = 5,
+        .direction = 1
+    };
 
-    int posX = 5;
+    bool sprite = true;
 
     while (key_pressed() != 27) //While Escape not pressed
     {
-        if (key_pressed() == 100 && posX <= 207)
+
+        // Z INPUT
+        while (key_pressed() == 'z' && m1.posY >= 1)
         {
-            posX+=PLAYER_SPEED;
+            m1.posY-=PLAYER_SPEED;
         }
 
-        else if (key_pressed() == 113 && posX >= 0)
+        // S INPUT
+        while (key_pressed() == 's' && m1.posY >= 1)
         {
-            posX-=PLAYER_SPEED;
+            m1.posY+=PLAYER_SPEED;
+        }
+
+        // D INPUT
+        while (key_pressed() == 'd' && m1.posX <= 207)
+        {
+            m1.posX+=PLAYER_SPEED+4;
+        }
+
+        // Q INPUT
+        while (key_pressed() == 'q' && m1.posX >= 0)
+        {
+            m1.posX-=PLAYER_SPEED+4;
+        }
+        
+        // J INPUT
+        while (key_pressed() == 'j') 
+        {
+            m1.direction = 3;
+        }
+
+        // K INPUT
+        while (key_pressed() == 'k') 
+        {
+            m1.direction = 2;
         }
 
         clear();
-        display_element_XY(posX, 20, MINION_LEFT);
+
+        /*
+        if (sprite == true)
+            display_element_XY(m1.posX, m1.posY, MINION_DEFAULT); 
+        else    
+            display_element_XY(m1.posX+5, m1.posY-1, MINION_LEFT);
 
         printf("\033[%d;%dH", 0,0);
-        printf("%d",posX);
+        printf("%d",m1.posX);
+        */
     }
 
     clear();
 
 	return 0;
 }
-
-
 
 
 
