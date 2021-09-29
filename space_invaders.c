@@ -5,28 +5,63 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdbool.h>
-
-#define clear() printf("\033[H\033[J")
-
-#define PLAYER_SPEED 2
-
-#define LIMIT_X 207
-//#define LIMIT_Y
-
+#include <stdlib.h>
+#include <sys/time.h>
+ 
+//PLAYER
+#define PLAYER_HP 10
+#define PLAYER_SPEED 4
+#define PLAYER_X_MIN 5
+#define PLAYER_X_MAX 82.00
+ 
+//ENEMIES
+#define MINION_NBR 5
+ 
+//RESSOURCES
 #define MINION_DEFAULT "./models/minion/minion_default.txt"
 #define MINION_LEFT "./models/minion/minion_left.txt"
 #define MINION_RIGHT "./models/minion/minion_right.txt"
-
-
+#define PLAYER "./models/player/player_default.txt"
+#define BACKGROUND "./models/background/stars02.txt"
+ 
+#define clear() printf("\033[H\033[J")
+ 
+typedef struct player player;
+struct player
+{
+    int posX;
+    int posY;
+};
+ 
 typedef struct minion minion;
 struct minion
 {
+    int HP;
     int posX;
     int posY;
     int direction; // D:1 - E:2 - W:3
 };
-
-
+ 
+typedef struct bullet bullet;
+struct bullet
+{
+    int posX;
+    int posY;
+    float lastupdate;
+};
+ 
+void get_time(double secs)
+{
+    struct timeval start, stop;
+    gettimeofday(&start, NULL);
+ 
+    // Do stuff  here
+ 
+    gettimeofday(&stop, NULL);
+    secs += (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
+    printf("time taken %f\n",secs);
+}
+ 
 char key_pressed()
 {
     struct termios oldterm, newterm;
@@ -42,14 +77,14 @@ char key_pressed()
     if (c != EOF) {ungetc(c, stdin); result = getchar();}
     return result;
 }
-
+ 
 void display_element_XY(int x, int y, char *file_path)
 {
     int x_draw = x;
     int y_draw = y;
-
+ 
     printf("\033[%d;%dH", y_draw,x_draw);
-
+ 
     int c;
     FILE *file;
     file = fopen(file_path, "r");
@@ -57,107 +92,147 @@ void display_element_XY(int x, int y, char *file_path)
     {
         while ((c = getc(file)) != EOF)
         {
-            if (c != '\n') 
-                putchar(c);
-
-            else
+            if (c == '\n') 
             {
                 y_draw+=1;
                 printf("\033[%d;%dH", y_draw, x_draw);
             }
+ 
+            else
+                printf("%c", c);                
         }
-
+ 
         fclose(file);
     }
 }
-
-int main()
+ 
+void display_background()
 {
-    minion m1 = {
-        .posX = 5,
-        .posY = 5,
-        .direction = 1
-    };
-
-    bool sprite = true;
-
-    while (key_pressed() != 27) //While Escape not pressed
+    printf("\033[%d;%dH", 1,1);
+ 
+    int c;
+    FILE *file;
+    file = fopen(BACKGROUND, "r");
+    if (file) 
     {
-
-        // Z INPUT
-        while (key_pressed() == 'z' && m1.posY >= 1)
+        while ((c = getc(file)) != EOF)
         {
-            m1.posY-=PLAYER_SPEED;
+            if ( c != ' ')
+                printf("%c", c);                 
         }
-
-        // S INPUT
-        while (key_pressed() == 's' && m1.posY >= 1)
-        {
-            m1.posY+=PLAYER_SPEED;
-        }
-
-        // D INPUT
-        while (key_pressed() == 'd' && m1.posX <= 207)
-        {
-            m1.posX+=PLAYER_SPEED+4;
-        }
-
-        // Q INPUT
-        while (key_pressed() == 'q' && m1.posX >= 0)
-        {
-            m1.posX-=PLAYER_SPEED+4;
-        }
-        
-        // J INPUT
-        while (key_pressed() == 'j') 
-        {
-            m1.direction = 3;
-        }
-
-        // K INPUT
-        while (key_pressed() == 'k') 
-        {
-            m1.direction = 2;
-        }
-
-        clear();
-
-        /*
-        if (sprite == true)
-            display_element_XY(m1.posX, m1.posY, MINION_DEFAULT); 
-        else    
-            display_element_XY(m1.posX+5, m1.posY-1, MINION_LEFT);
-
-        printf("\033[%d;%dH", 0,0);
-        printf("%d",m1.posX);
-        */
+ 
+        fclose(file);
     }
-
-    clear();
-
-	return 0;
 }
-
-
-
-
-/*
-
-typedef struct vaisseau VAISSEAU;
-struct vaisseau
+ 
+void minion_update(minion element)
 {
-    char Direction;           //N => Nord, S => Sud, E => EST, O => OUEST
-    int PosX;                  //Position courante coin gauche X du vaisseau
-    int PosY;                  //Position courante coin gauche Y du vaisseau
-    int Blindage;              //Niveau de blindage en cours du vaisseau(0=>rien, 1=>blindé, 2=>ultra-blindé, etc.)
-    int Touches;               //Nombre de fois que le vaisseau est touché parun missile
-    char Carros_ennemi [3][16];//Carrosserie du vaisseau ennemi, servira pourl’affichage du vaisseau ennemi à tout moment
-    char Carrosserie [6][40];  //Carrosserie du vaisseau du joueur, servira pourl’affichage du vaisseau du joueur à tout moment
-    char Type;                 //’M’=> mon vaisseau, ’E’=> vaisseau ennemi
-    char Couleur[30];          //Couleur du vaisseau
-    int Etat;                  //État du vaisseau 1=> actif, 2=> en destruction,3 => inactif
-    int Mise_a_jour;           //utile pour la suppression du vaisseau en tenantcompte d’un certain délai
-    struct vaisseau*NXT;     //Pointeur vers un prochain vaisseau, servirapour la liste chaînée - Vous pouvez rajouter d’autres variables si nécessaire
-};
-
-*/
+    clear();
+    //display_background();
+    
+    if (element.direction == 1)
+        display_element_XY(element.posX, element.posY, MINION_DEFAULT); 
+    else if (element.direction == 2)
+        display_element_XY(element.posX+5, element.posY-1, MINION_LEFT);
+    else if (element.direction == 3)
+        display_element_XY(element.posX+5, element.posY-1, MINION_RIGHT);
+}
+ 
+void player_update(player element)
+{
+    clear();
+    //display_background();
+    display_element_XY(element.posX, element.posY, PLAYER); 
+}
+ 
+void player_listen(player *element)
+{
+    char input; 
+    input = key_pressed();
+ 
+    // Esc
+    if (input == 27) //While Escape not pressed
+    {
+        clear();
+        exit(0);
+    }
+ 
+    // D INPUT
+    else if (input == 'd' && (*element).posX < PLAYER_X_MAX)
+    {
+        if ( (*element).posX + PLAYER_SPEED > PLAYER_X_MAX )
+        {
+            (*element).posX+=1;
+            player_update(*element);
+        }
+ 
+        else
+        {
+            (*element).posX+=PLAYER_SPEED;
+            player_update(*element);
+        }
+    }
+ 
+    // Q INPUT
+    else if (input == 'q' && (*element).posX > PLAYER_X_MIN)
+    {
+        if ( (*element).posX - PLAYER_SPEED < PLAYER_X_MIN )
+        {
+            (*element).posX-=1;
+            player_update(*element);
+        }
+ 
+        else
+        {
+            (*element).posX-=PLAYER_SPEED;
+            player_update(*element);
+        }
+    }   
+}
+ 
+minion * minion_init()
+{
+    int a;
+    minion *minions = malloc(MINION_NBR*sizeof(minion)); 
+ 
+    for(a = 0; a < MINION_NBR; a++)
+    {
+        minions[a].HP = 5;
+        minions[a].posX = PLAYER_X_MAX - (PLAYER_X_MAX/100)*70 + (((PLAYER_X_MAX/100)*70)/MINION_NBR)*a;
+        minions[a].posY = 4;
+        minions[a].direction = 1;
+    }
+ 
+    //Display content of my array or minions
+    //for(a = 0; a < MINION_NBR; a++) printf("---- Minion #%d\nHP = %d\nPosX = %d\nPosY = %d\nDirection = %d\n------------\n\n", a+1, minions[a].HP, minions[a].posX, minions[a].posY, minions[a].direction);
+ 
+    return minions;    
+}
+ 
+player * player_init()
+{
+    player *player = malloc(sizeof(player));
+    (*player).posX = 50;
+    (*player).posY = 35;
+ 
+    return player;
+}
+ 
+int main()
+{   
+    minion *minions = minion_init(); //Access element with "minions[0].posX)"
+    player *player = player_init(); // Access element with "(*player).posX)"
+ 
+    player_update((*player));
+ 
+    while (1) //GAME
+    {
+        player_listen(player);
+    }
+ 
+    // FREE, CLEAR SCREEN, QUIT    
+    free(minions);
+    free(player);
+    clear();
+    return 0;
+}
